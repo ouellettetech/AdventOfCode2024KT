@@ -4,7 +4,7 @@ fun main() {
     fun part1(input: List<String>): Number {
         println("Start Part 1")
         var total = 0
-        var wordSearch = Grid(input)
+        var wordSearch = GridString(input)
         for(y in 0..input.size-1){
             for(x in 0..input[y].length-1){
                 total += wordSearch.checkForWord("XMAS", x, y)
@@ -19,7 +19,7 @@ fun main() {
     fun part2(input: List<String>): Int {
         println("Start Part 2")
         var total = 0
-        var wordSearch = Grid(input)
+        var wordSearch = GridString(input)
         for(y in 0..input.size-1){
             for(x in 0..input[y].length-1){
                 var result = wordSearch.findXMas(x, y)

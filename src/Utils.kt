@@ -22,7 +22,8 @@ fun Any?.println() = println(this)
 
 
 
-class Grid constructor(private val gridVal: List<String>) {
+
+class GridString(private val gridVal: List<String>) {
 
     fun getChar(x: Int,y: Int) : Char? {
         if(x<0 || y<0|| (y>=gridVal.size) || (x>=gridVal[y].length)){
@@ -33,7 +34,7 @@ class Grid constructor(private val gridVal: List<String>) {
         }
     }
 
-    class coordinates constructor(private var x:Int, private var y:Int) {
+    class coordinates(private var x:Int, private var y:Int) {
         override fun toString(): String {
             return "X: $x Y: $y"
         }
