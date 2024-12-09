@@ -3,11 +3,12 @@ enum class Direction {
     UP, DOWN, LEFT, RIGHT
 }
 
-class Grid(private val gridVal: List<String>) {
-    var grid = parseInput(gridVal)
+class Grid() {
+    lateinit var grid : List<List<Node>>
     var curX: Int = 0
     var curY: Int = 0
     var curDirection: Direction = Direction.UP
+    var antennas: MutableMap<Char, MutableList<coordinates>> = mutableMapOf()
 
     class Node{
         var visited = false
@@ -18,7 +19,7 @@ class Grid(private val gridVal: List<String>) {
         var visitedRight = false
     }
 
-    private fun parseInput(gridVal: List<String>): List<List<Node>> {
+    fun parseInput(gridVal: List<String>) {
         var ret = ArrayList<ArrayList<Node>>()
         gridVal.forEachIndexed() { y, line ->
             ret.add(ArrayList())
@@ -36,7 +37,35 @@ class Grid(private val gridVal: List<String>) {
                 ret[y].add(currentSpot)
             }
         }
-        return ret
+        grid = ret
+    }
+
+
+    fun parseInputAntenna(gridVal: List<String>) {
+        var ret = ArrayList<ArrayList<Node>>()
+        gridVal.forEachIndexed() { y, line ->
+            ret.add(ArrayList())
+            line.forEachIndexed() { x, entry ->
+                var currentSpot = Node()
+                currentSpot.visited = false
+                when (entry) {
+                    '.' -> currentSpot.obstacle = false
+                    else -> {
+                        currentSpot.obstacle = false
+                        addAntenna(x,y,entry)
+                    }
+                }
+                ret[y].add(currentSpot)
+            }
+        }
+        grid = ret
+    }
+
+    private fun addAntenna(x: Int, y: Int, entry: Char) {
+        if(!antennas.containsKey(entry)) {
+            antennas[entry] = emptyList<coordinates>().toMutableList()
+        }
+        antennas[entry]?.add(coordinates(x,y))
     }
 
     fun setStart(x:Int, y:Int){
@@ -57,7 +86,7 @@ class Grid(private val gridVal: List<String>) {
         }
     }
 
-    class coordinates(private var x:Int, private var y:Int) {
+    class coordinates(var x:Int, var y:Int) {
         override fun toString(): String {
             return "X: $x Y: $y"
         }
@@ -216,5 +245,119 @@ class Grid(private val gridVal: List<String>) {
             }
         }
         return count
+    }
+
+    fun findAntinodes() {
+        for(currentFreq in antennas.keys){
+            println("Looking at Freq: $currentFreq")
+            val currentFreqValues = antennas[currentFreq]
+            if (currentFreqValues != null) { //since this is in keys should never be null....
+                for(first in 0..<currentFreqValues.size){
+                    for(second in first+1..<currentFreqValues.size) {
+                        findAntinode(currentFreqValues[first],currentFreqValues[second])
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setAntinode(curX:Int,curY: Int){
+        var node = getNode(curX,curY)
+        if(node != null){
+            node.obstacle = true
+        }
+    }
+    private fun findAntinode(first: Grid.coordinates, second: Grid.coordinates) {
+        var xDiff = first.x - second.x
+        var yDiff = first.y - second.y
+        var minFirstX = first.x - xDiff
+        var minFirstY = first.y - yDiff
+        var minSecondX = second.x - xDiff
+        var minSecondY = second.y - yDiff
+        var minX: Int
+        var minY: Int
+        var maxX: Int
+        var maxY: Int
+        if(minFirstX == second.x){
+            minY = minSecondY
+            minX = minSecondX
+        }
+        else {
+            minY = minFirstY
+            minX = minFirstX
+        }
+        var maxFirstX = first.x + xDiff
+        var maxFirstY = first.y + yDiff
+        var maxSecondX = second.x + xDiff
+        var maxSecondY = second.y + yDiff
+        if(maxFirstX == second.x){
+            maxX = maxSecondX
+            maxY = maxSecondY
+        }
+        else {
+            maxX = maxFirstX
+            maxY = maxFirstY
+        }
+
+        println("Finding Antinode for ${first.x},${first.y} and ${second.x},${second.y} Setting to min: $minX,$minY and Max: $maxX, $maxY")
+        setAntinode(minX,minY)
+        setAntinode(maxX,maxY)
+    }
+
+    fun countAntinodes(): Number {
+        var total = 0
+        for(line in grid){
+            for(curNode in line){
+                if(curNode.obstacle){
+                    total++
+                }
+            }
+        }
+        return total
+    }
+
+    private fun findHarmonicAntinode(first: Grid.coordinates, second: Grid.coordinates) {
+        var xDiff = first.x - second.x
+        var yDiff = first.y - second.y
+
+        println("Finding Antinode for ${first.x},${first.y} and ${second.x},${second.y}")
+        var setNextNode = setNextAntnode(coordinates(first.x,first.y),0,0)
+        while(setNextNode!=null)
+        {
+            println("Finding Antinode for ${first.x},${first.y} and ${second.x},${second.y} Setting to: ${setNextNode?.x},${setNextNode?.y}")
+            setNextNode = setNextAntnode(setNextNode,xDiff,yDiff)
+        }
+        setNextNode = setNextAntnode(coordinates(first.x,first.y),0,0)
+        while(setNextNode!=null)
+        {
+            println("Finding Antinode for ${first.x},${first.y} and ${second.x},${second.y} Setting to: ${setNextNode?.x},${setNextNode?.y}")
+            setNextNode = setNextAntnode(setNextNode,xDiff*-1,yDiff*-1)
+        }
+
+    }
+
+    fun setNextAntnode(currentNode: Grid.coordinates, xDiff: Int, yDiff: Int): Grid.coordinates? {
+        var newX = currentNode.x+xDiff
+        var newY = currentNode.y+yDiff
+        var nextNode = getNode(newX,newY)
+        if(nextNode != null){
+            nextNode.obstacle = true
+            return coordinates(newX,newY)
+        }
+        return null
+    }
+
+    fun findHarmonicAntinodes() {
+        for (currentFreq in antennas.keys) {
+            println("Looking at Freq: $currentFreq")
+            val currentFreqValues = antennas[currentFreq]
+            if (currentFreqValues != null) { //since this is in keys should never be null....
+                for (first in 0..<currentFreqValues.size) {
+                    for (second in first + 1..<currentFreqValues.size) {
+                        findHarmonicAntinode(currentFreqValues[first], currentFreqValues[second])
+                    }
+                }
+            }
+        }
     }
 }
