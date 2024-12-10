@@ -9,6 +9,7 @@ class Grid() {
     var curY: Int = 0
     var curDirection: Direction = Direction.UP
     var antennas: MutableMap<Char, MutableList<coordinates>> = mutableMapOf()
+    var trailHeads: MutableList<coordinates> = mutableListOf()
 
     class Node{
         var visited = false
@@ -17,6 +18,7 @@ class Grid() {
         var visitedDown = false
         var visitedLeft = false
         var visitedRight = false
+        var value: Int = -1
     }
 
     fun parseInput(gridVal: List<String>) {
@@ -359,5 +361,102 @@ class Grid() {
                 }
             }
         }
+    }
+
+    private fun addTrailHeads(x: Int, y: Int, entry: Char) {
+        trailHeads.add(coordinates(x,y))
+    }
+
+    fun findTrailHelper(current: coordinates, expectedElevation: Int): Set<String> {
+        var nextNode = getNode(current.x,current.y)
+        if(nextNode == null){
+            return emptySet()
+        }
+        if(expectedElevation != nextNode.value){
+            return emptySet()
+        }
+        if(nextNode.value == 9){
+            return setOf(current.toString())
+        }
+        var total = emptySet<String>().toMutableSet()
+        total.addAll(findTrailHelper(coordinates(current.x-1,current.y),expectedElevation+1))
+        total.addAll(findTrailHelper(coordinates(current.x,current.y-1),expectedElevation+1))
+        total.addAll(findTrailHelper(coordinates(current.x+1,current.y),expectedElevation+1))
+        total.addAll(findTrailHelper(coordinates(current.x,current.y+1),expectedElevation+1))
+        return total
+    }
+
+    fun findTrailHelperDist(current: coordinates, expectedElevation: Int): List<coordinates> {
+        var nextNode = getNode(current.x,current.y)
+        if(nextNode == null){
+            return emptyList()
+        }
+        if(expectedElevation != nextNode.value){
+            return emptyList()
+        }
+        if(nextNode.value == 9){
+            return listOf(current)
+        }
+        var total = emptyList<coordinates>().toMutableList()
+        total.addAll(findTrailHelperDist(coordinates(current.x-1,current.y),expectedElevation+1))
+        total.addAll(findTrailHelperDist(coordinates(current.x,current.y-1),expectedElevation+1))
+        total.addAll(findTrailHelperDist(coordinates(current.x+1,current.y),expectedElevation+1))
+        total.addAll(findTrailHelperDist(coordinates(current.x,current.y+1),expectedElevation+1))
+        return total
+    }
+
+    fun findTrail(trailhead: coordinates): Long{
+        var allTops = findTrailHelper(trailhead,0)
+        for(top in allTops){
+            print("($top)")
+        }
+        print("\n")
+        return allTops.size.toLong()
+    }
+
+    fun findTrailDist(trailhead: coordinates): Long{
+        var allTops = findTrailHelperDist(trailhead,0)
+        for(top in allTops){
+            print("($top)")
+        }
+        print("\n")
+        return allTops.size.toLong()
+    }
+
+    fun findAllTrails(): Long{
+        var total = 0L
+        for (trailHead in trailHeads){
+            var result = findTrail(trailHead)
+            println("Score: $result")
+            total += result
+        }
+        return total
+    }
+
+    fun parseInputTopoGraph(gridVal: List<String>) {
+        val zeroVal = '0'.code
+        var ret = ArrayList<ArrayList<Node>>()
+        gridVal.forEachIndexed() { y, line ->
+            ret.add(ArrayList())
+            line.forEachIndexed() { x, entry ->
+                var currentSpot = Node()
+                currentSpot.value = (entry.code - zeroVal)
+                if(currentSpot.value == 0){
+                    addTrailHeads(x,y,entry)
+                }
+                ret[y].add(currentSpot)
+            }
+        }
+        grid = ret
+    }
+
+    fun findAllDistinctTrails(): Number {
+        var total = 0L
+        for (trailHead in trailHeads){
+            var result = findTrailDist(trailHead)
+            println("Rating: $result")
+            total += result
+        }
+        return total
     }
 }
